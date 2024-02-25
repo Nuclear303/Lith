@@ -17,6 +17,14 @@ html, body{
   width:15%;
   height:100%;
   border-right:1px solid rgba(128, 128, 128, 0.125);
+  overflow-y:scroll;
+  scrollbar-width:thin;
+  scroll-behavior: smooth;
+  scrollbar-color: rgb(30,30,30);
+  padding:5px 3px;
+}
+.files > *:last-child{
+  margin-bottom:10% ;
 }
 
 .main{

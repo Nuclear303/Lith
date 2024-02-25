@@ -7,6 +7,7 @@ import "./App.css"
 import { open, save, confirm} from '@tauri-apps/api/dialog'
 import { appConfigDir } from '@tauri-apps/api/path';
 import {fs, invoke} from "@tauri-apps/api";
+import { FileEntry } from "@tauri-apps/api/fs";
 
 export default function App(){
   const [activePath, setActivePath]: [string, React.Dispatch<SetStateAction<string>>] = useState("");
@@ -15,7 +16,7 @@ export default function App(){
   const [needsSaving, setNeedsSaving]: [boolean, React.Dispatch<SetStateAction<boolean>>] = useState(false);
   const [fileState, setFileState]: [string, React.Dispatch<SetStateAction<string>>] = useState("");
   const [fontSize, setFontSize]: [number, React.Dispatch<SetStateAction<number>>] = useState(16);
-  const [files, setFiles] = useState([] as string[])
+  const [files, setFiles] = useState([] as FileEntry[])
 
   const openFile = async () => {
     await open({
@@ -36,6 +37,14 @@ export default function App(){
     .catch((err)=>{console.log(err)});
   }
 
+  const loadFile = (path:string) =>{
+    fs.readTextFile(path).then(text=>{
+      const textarea : HTMLTextAreaElement = document.querySelector("textarea") as HTMLTextAreaElement;
+      textarea.value = text
+    })
+    .catch((err)=>{console.log(err)})
+  }
+
   const openFolder = async() =>{
 
     await open({
@@ -47,8 +56,7 @@ export default function App(){
         setActivePath(select);
         fs.readDir(select, {recursive:true}).then(fileArr=>{
           fileArr.forEach(file=>{
-            console.log(file)
-            setFiles(prev => [...prev, file.path])
+            setFiles(prev => [...prev, file])
           })
         })
       }
@@ -106,6 +114,13 @@ export default function App(){
 
   }
 
+  const fileClickHandler = (path:string): void =>{
+    if((/^[\w \[\$\&\+\,\;\=\@\#\|\'\.\-\^\(\)\%\!\]]{0,}\.[\w]+$/.test(path.substring(path.lastIndexOf('\\')+1)))){
+      setActivePath(path);
+      loadFile(path);
+    }
+  }
+
   const tabHandler = (event: KeyboardEvent): void =>{
     if(event.key == "Tab"){
       event.preventDefault();
@@ -123,7 +138,7 @@ export default function App(){
 
   const shortcutHandler = (event: KeyboardEvent) : any =>{
     if(event.ctrlKey && event.shiftKey && event.key == "O"){
-      setFiles([] as string[]);
+      setFiles([] as FileEntry[]);
       openFolder();
     }
     else if(event.ctrlKey && event.key == "o"){
@@ -176,7 +191,7 @@ export default function App(){
     }, 5000);
     
     const fileElements = files.map(file=>{
-      return <File key={file} path={file}/>
+      return <File key={file.path} path={file.path} children={file.children} onClick={fileClickHandler}/>
     })
     return(
       <>
